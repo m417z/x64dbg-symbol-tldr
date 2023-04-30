@@ -22,7 +22,23 @@ int g_pluginHandle;
 
 class SymbolInfoWrapper {
    public:
-    ~SymbolInfoWrapper() {
+    SymbolInfoWrapper() = default;
+    ~SymbolInfoWrapper() { free(); }
+
+    SymbolInfoWrapper(const SymbolInfoWrapper&) = delete;
+    SymbolInfoWrapper& operator=(const SymbolInfoWrapper&) = delete;
+
+    SYMBOLINFO* put() {
+        free();
+        memset(&info, 0, sizeof(info));
+        return &info;
+    }
+
+    const SYMBOLINFO* get() const { return &info; }
+    const SYMBOLINFO* operator->() const { return &info; }
+
+   private:
+    void free() {
         if (info.freeDecorated) {
             BridgeFree(info.decoratedSymbol);
         }
@@ -31,11 +47,7 @@ class SymbolInfoWrapper {
         }
     }
 
-    SYMBOLINFO* operator&() { return &info; }
-    SYMBOLINFO* operator->() { return &info; }
-
-   private:
-    SYMBOLINFO info;
+    SYMBOLINFO info{};
 };
 
 std::string CollapseLabelTemplates(std::string_view label) {
@@ -233,10 +245,12 @@ extern "C" DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct) {
 
 extern "C" DLL_EXPORT void CBSELCHANGED(CBTYPE, PLUG_CB_SELCHANGED* selInfo) {
     SymbolInfoWrapper info;
-    if (!DbgGetSymbolInfoAt(selInfo->VA, &info) || !*info->undecoratedSymbol) {
+    if (!DbgGetSymbolInfoAt(selInfo->VA, info.put()) ||
+        !*info->undecoratedSymbol) {
         duint start;
         if (!DbgFunctionGet(selInfo->VA, &start, nullptr) ||
-            !DbgGetSymbolInfoAt(start, &info) || !*info->undecoratedSymbol) {
+            !DbgGetSymbolInfoAt(start, info.put()) ||
+            !*info->undecoratedSymbol) {
             return;
         }
     }
