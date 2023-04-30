@@ -210,19 +210,20 @@ extern "C" DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct) {
 extern "C" DLL_EXPORT void plugsetup(PLUG_SETUPSTRUCT* setupStruct) {
     int hMenu = setupStruct->hMenu;
 
-    HRSRC hResource =
+    HRSRC resource =
         FindResource(g_hDllInst, MAKEINTRESOURCE(IDB_ICON), L"PNG");
-    if (hResource) {
-        HGLOBAL hMemory = LoadResource(g_hDllInst, hResource);
-        if (hMemory) {
-            DWORD dwSize = SizeofResource(g_hDllInst, hResource);
-            LPVOID lpAddress = LockResource(hMemory);
-            if (lpAddress) {
-                ICONDATA IconData;
-                IconData.data = lpAddress;
-                IconData.size = dwSize;
+    if (resource) {
+        HGLOBAL memory = LoadResource(g_hDllInst, resource);
+        if (memory) {
+            PVOID data = LockResource(memory);
+            if (data) {
+                DWORD size = SizeofResource(g_hDllInst, resource);
+                ICONDATA iconData{
+                    .data = data,
+                    .size = size,
+                };
 
-                _plugin_menuseticon(hMenu, &IconData);
+                _plugin_menuseticon(hMenu, &iconData);
             }
         }
     }
