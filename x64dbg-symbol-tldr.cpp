@@ -3,8 +3,8 @@
 #include "resource.h"
 
 #define PLUGIN_NAME "Symbol tl;dr"
-#define PLUGIN_VERSION 1
-#define PLUGIN_VERSION_STR "1.0"
+#define PLUGIN_VERSION 101
+#define PLUGIN_VERSION_STR "1.0.1"
 
 #ifndef DLL_EXPORT
 #define DLL_EXPORT __declspec(dllexport)
