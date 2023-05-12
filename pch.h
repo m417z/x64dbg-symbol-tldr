@@ -4,6 +4,9 @@
 #define NOMINMAX
 #include <windows.h>
 
+#include <commctrl.h>
+#include <shellapi.h>
+
 #include <string>
 #include <string_view>
 

@@ -2,6 +2,7 @@
 
 #include "resource.h"
 
+#define PLUGIN_NAME "Symbol tl;dr"
 #define PLUGIN_VERSION 1
 #define PLUGIN_VERSION_STR "1.0"
 
@@ -188,6 +189,44 @@ void AddInfoLinesForWordWrappedLabel(std::string_view label) {
     }
 }
 
+void OpenUrl(HWND hWnd, PCWSTR url) {
+    if ((INT_PTR)ShellExecute(hWnd, L"open", url, nullptr, nullptr,
+                              SW_SHOWNORMAL) <= 32) {
+        MessageBox(hWnd, L"Failed to open link", nullptr, MB_ICONHAND);
+    }
+}
+
+void About(HWND hWnd) {
+    PCWSTR content =
+        TEXT(PLUGIN_NAME) L" v" TEXT(PLUGIN_VERSION_STR) L"\n"
+        L"By m417z\n"
+        L"\n"
+        L"Source code:\n"
+        L"<A HREF=\"https://github.com/m417z/x64dbg-symbol-tldr\">https://github.com/m417z/x64dbg-symbol-tldr</a>";
+
+    TASKDIALOGCONFIG taskDialogConfig{
+        .cbSize = sizeof(taskDialogConfig),
+        .hwndParent = hWnd,
+        .hInstance = g_hDllInst,
+        .dwFlags = TDF_ENABLE_HYPERLINKS | TDF_ALLOW_DIALOG_CANCELLATION,
+        .pszWindowTitle = L"About",
+        .pszMainIcon = TD_INFORMATION_ICON,
+        .pszContent = content,
+        .pfCallback = [](HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                         LONG_PTR lpRefData) -> HRESULT {
+            switch (msg) {
+                case TDN_HYPERLINK_CLICKED:
+                    OpenUrl(hwnd, (PCWSTR)lParam);
+                    break;
+            }
+
+            return S_OK;
+        },
+    };
+
+    TaskDialogIndirect(&taskDialogConfig, nullptr, nullptr, nullptr);
+}
+
 }  // namespace
 
 BOOL APIENTRY DllMain(HMODULE hModule,
@@ -210,10 +249,10 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 extern "C" DLL_EXPORT bool pluginit(PLUG_INITSTRUCT* initStruct) {
     initStruct->pluginVersion = PLUGIN_VERSION;
     initStruct->sdkVersion = PLUG_SDKVERSION;
-    strcpy_s(initStruct->pluginName, "Symbol tl;dr");
+    strcpy_s(initStruct->pluginName, PLUGIN_NAME);
     g_pluginHandle = initStruct->pluginHandle;
 
-    _plugin_logputs("Symbol tl;dr v" PLUGIN_VERSION_STR);
+    _plugin_logputs(PLUGIN_NAME " v" PLUGIN_VERSION_STR);
     _plugin_logputs("  By m417z");
 
     return true;
@@ -263,12 +302,7 @@ extern "C" DLL_EXPORT void CBSELCHANGED(CBTYPE, PLUG_CB_SELCHANGED* selInfo) {
 extern "C" DLL_EXPORT void CBMENUENTRY(CBTYPE, PLUG_CB_MENUENTRY* info) {
     switch (info->hEntry) {
         case MENU_ABOUT:
-            MessageBox(
-                GetActiveWindow(),
-                L"Symbol tl;dr v" TEXT(PLUGIN_VERSION_STR) L"\n" 
-                L"By m417z\n" 
-                L"https://github.com/m417z/x64dbg-symbol-tldr",
-                L"About", MB_ICONINFORMATION);
+            About(GetActiveWindow());
             break;
     }
 }
